@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epstine.Fun | The Future of Decisions</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Three.js CDN for PixelSnow -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #080808;
+            --accent: #7C5CBF;
+            --text-primary: #F0EFF5;
+            --text-muted: #5C5C6E;
+            --transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Global PixelSnow Background */
+        .pixel-snow-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 30px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        header.scrolled {
+            padding: 20px 50px;
+            background: rgba(8, 8, 8, 0.8);
+            backdrop-filter: blur(20px);
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 22px;
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: -1px;
+        }
+
+        .nav-btn {
+            background: var(--accent);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        /* 1. Intro Video Hero */
+        .intro-hero {
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .intro-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .intro-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .intro-text h1 {
+            font-size: clamp(60px, 10vw, 120px);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin-bottom: 20px;
+        }
+
+        .intro-text p {
+            font-size: 20px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* 2. Sidekick Section */
+        .sidekick-section {
+            height: 100vh;
+            background-color: #f5f3ef;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            color: #1a1a1a;
+        }
+
+        .sidekick-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .sidekick-center h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(48px, 8vw, 100px);
+            font-weight: 700;
+            font-style: italic;
+            letter-spacing: -0.02em;
+            color: #1a1a1a;
+            position: relative;
+            z-index: 10;
+        }
+
+        .floating-command {
+            position: absolute;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: #1a1a1a;
+            padding: 8px 16px;
+            cursor: pointer;
+            z-index: 8;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        /* 3. Problem Section */
+        section {
+            padding: 160px 24px;
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .bg-alt {
+            background: rgba(12, 12, 12, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .label {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            font-size: clamp(32px, 5vw, 64px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+
+        .section-desc {
+            max-width: 600px;
+            margin: 0 auto;
+            color: var(--text-muted);
+            font-size: 18px;
+        }
+
+        .scatter-container {
+            height: 400px;
+            position: relative;
+            margin-top: 60px;
+            perspective: 1000px;
+        }
+
+        .scatter-card {
+            width: 180px;
+            height: 260px;
+            border-radius: 20px;
+            background-size: cover;
+            background-position: center;
+            position: absolute;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* 4. Solution Section */
+        .deck-container {
+            height: 500px;
+            position: relative;
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .deck-card {
+            width: 220px;
+            height: 320px;
+            border-radius: 24px;
+            background-size: cover;
+            background-position: center;
+            position: absolute;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .consensus-label {
+            position: absolute;
+            bottom: -60px;
+            background: var(--accent);
+            padding: 8px 20px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            box-shadow: 0 10px 30px rgba(124, 92, 191, 0.4);
+            opacity: 0;
+        }
+
+        /* Footer */
+        footer {
+            padding: 80px 24px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="pixel-snow" class="pixel-snow-container"></div>
+
+    <header id="header">
+        <a href="landing_page.html" class="logo">Epstine.Fun</a>
+        <a href="login_page.html" class="nav-btn">Get Started</a>
+    </header>
+
+    <!-- 1. Video Hero -->
+    <div class="intro-hero">
+        <video autoplay muted loop playsinline class="intro-video">
+            <source src="assets/hero-video.mp4" type="video/mp4">
+        </video>
+        <div class="intro-overlay">
+            <div class="intro-text">
+                <h1>Decide Together.</h1>
+                <p>Stop scrolling. Start deciding.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Sidekick Section -->
+    <section class="sidekick-section" id="sidekick">
+        <canvas class="sidekick-canvas" id="sidekick-canvas"></canvas>
+        <div class="sidekick-center" id="sidekick-center">
+            <h2>/decide-together</h2>
+        </div>
+        <div id="command-container"></div>
+    </section>
+
+    <!-- 3. Problem Section -->
+    <section class="bg-alt" id="problem">
+        <div class="container">
+            <span class="label">The Problem</span>
+            <h2>Too many choices.</h2>
+            <p class="section-desc">Every group chat ends the same way. Endless suggestions, zero consensus. Hours lost to scrolling and debating what should have taken seconds.</p>
+            <div class="scatter-container" id="scatter-container"></div>
+        </div>
+    </section>
+
+    <!-- 4. Solution Section -->
+    <section id="solution">
+        <div class="container">
+            <span class="label">The Solution</span>
+            <h2>One platform.<br>One shared swipe.</h2>
+            <p class="section-desc">Epstine.Fun turns group indecision into a shared experience. Everyone swipes on the same feed, and the best choice rises to the top instantly.</p>
+            <div class="deck-container">
+                <div class="deck-card" style="background-image: url('assets/card-preview.jpg'); z-index: 10;"></div>
+                <div class="deck-card" style="background-image: url('assets/card-preview.jpg'); z-index: 9;"></div>
+                <div class="deck-card" style="background-image: url('assets/card-preview.jpg'); z-index: 8;"></div>
+                <div class="consensus-label" id="consensus-label">CONSENSUS REACHED</div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="brand">Epstine.Fun</div>
+        <div style="margin-top: 12px;">© 2026 Epstine.Fun. All rights reserved.</div>
+    </footer>
+
+    <script>
+        // --- PixelSnow Component ---
+        const PixelSnow = (function() {
+            const vertexShader = `void main() { gl_Position = vec4(position, 1.0); }`;
+            const fragmentShader = `
+                precision mediump float;
+                uniform float uTime;
+                uniform vec2 uResolution;
+                uniform float uFlakeSize;
+                uniform float uMinFlakeSize;
+                uniform float uPixelResolution;
+                uniform float uSpeed;
+                uniform float uDepthFade;
+                uniform float uFarPlane;
+                uniform vec3 uColor;
+                uniform float uBrightness;
+                uniform float uGamma;
+                uniform float uDensity;
+                uniform float uVariant;
+                uniform float uDirection;
+
+                #define PI 3.14159265
+                #define M1 1597334677U
+                #define M2 3812015801U
+                #define M3 3299493293U
+                #define F0 2.3283064e-10
+                #define hash(n) (n * (n ^ (n >> 15)))
+                #define coord3(p) (uvec3(p).x * M1 ^ uvec3(p).y * M2 ^ uvec3(p).z * M3)
+
+                const vec3 camK = vec3(0.57735027, 0.57735027, 0.57735027);
+                const vec3 camI = vec3(0.70710678, 0.0, -0.70710678);
+                const vec3 camJ = vec3(-0.40824829, 0.81649658, -0.40824829);
+
+                vec3 hash3(uint n) {
+                    uvec3 hashed = hash(n) * uvec3(1U, 511U, 262143U);
+                    return vec3(hashed) * F0;
+                }
+
+                void main() {
+                    float invPixelRes = 1.0 / uPixelResolution;
+                    float pixelSize = max(1.0, floor(0.5 + uResolution.x * invPixelRes));
+                    float invPixelSize = 1.0 / pixelSize;
+                    vec2 fragCoord = floor(gl_FragCoord.xy * invPixelSize);
+                    vec2 res = uResolution * invPixelSize;
+                    float invResX = 1.0 / res.x;
+                    vec3 ray = normalize(vec3((fragCoord - res * 0.5) * invResX, 1.0));
+                    ray = ray.x * camI + ray.y * camJ + ray.z * camK;
+                    float timeSpeed = uTime * uSpeed;
+                    vec3 camPos = (cos(uDirection)*0.4 * camI + sin(uDirection)*0.4 * camJ + 0.1 * camK) * timeSpeed;
+                    vec3 pos = camPos;
+                    vec3 strides = 1.0 / max(abs(ray), vec3(0.001));
+                    vec3 raySign = step(ray, vec3(0.0));
+                    vec3 phase = fract(pos) * strides;
+                    phase = mix(strides - phase, phase, raySign);
+                    float t = 0.0;
+                    for (int i = 0; i < 64; i++) {
+                        if (t >= uFarPlane) break;
+                        vec3 fpos = floor(pos);
+                        uint cellCoord = coord3(fpos);
+                        if (hash3(cellCoord).x < uDensity) {
+                            vec3 h = hash3(cellCoord);
+                            vec3 flakePos = 0.5 - 0.5 * cos(4.0 * sin(fpos.yzx*0.073) + 4.0 * sin(fpos.zxy*0.27) + 2.0 * h + timeSpeed * 0.1 * vec3(7,8,5));
+                            flakePos = flakePos * 0.8 + 0.1 + fpos;
+                            float toIntersection = dot(flakePos - pos, camK) / dot(ray, camK);
+                            if (toIntersection > 0.0) {
+                                vec3 testPos = pos + ray * toIntersection - flakePos;
+                                float depth = dot(flakePos - camPos, camK);
+                                float flakeSize = max(uFlakeSize, uMinFlakeSize * depth * 0.5 * invResX);
+                                if (length(vec2(dot(testPos, camI), dot(testPos, camJ))) < flakeSize) {
+                                    float intensity = exp2(-(t + toIntersection) / uDepthFade) * uBrightness;
+                                    gl_FragColor = vec4(uColor * pow(vec3(intensity), vec3(uGamma)), 1.0);
+                                    return;
+                                }
+                            }
+                        }
+                        float nextStep = min(min(phase.x, phase.y), phase.z);
+                        vec3 sel = step(phase, vec3(nextStep));
+                        phase = phase - nextStep + strides * sel;
+                        t += nextStep;
+                        pos = mix(pos + ray * nextStep, floor(pos + ray * nextStep + 0.5), sel);
+                    }
+                    gl_FragColor = vec4(0.0);
+                }
+            `;
+
+            return class {
+                constructor(container, props = {}) {
+                    this.container = container;
+                    this.props = {
+                        color: '#ffffff', flakeSize: 0.007, minFlakeSize: 1.25,
+                        pixelResolution: 500, speed: 0.5, depthFade: 8, farPlane: 20,
+                        brightness: 1.5, gamma: 0.4545, density: 0.25,
+                        variant: 'square', direction: 200, ...props
+                    };
+                    this.init();
+                }
+                init() {
+                    const scene = new THREE.Scene();
+                    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+                    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
+                    const width = this.container.offsetWidth || window.innerWidth;
+                    const height = this.container.offsetHeight || window.innerHeight;
+                    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                    renderer.setSize(width, height);
+                    this.container.appendChild(renderer.domElement);
+                    const material = new THREE.ShaderMaterial({
+                        vertexShader, fragmentShader, transparent: true,
+                        uniforms: {
+                            uTime: { value: 0 },
+                            uResolution: { value: new THREE.Vector2(width, height) },
+                            uFlakeSize: { value: this.props.flakeSize },
+                            uMinFlakeSize: { value: this.props.minFlakeSize },
+                            uPixelResolution: { value: this.props.pixelResolution },
+                            uSpeed: { value: this.props.speed },
+                            uDepthFade: { value: this.props.depthFade },
+                            uFarPlane: { value: this.props.farPlane },
+                            uColor: { value: new THREE.Vector3(1, 1, 1) },
+                            uBrightness: { value: this.props.brightness },
+                            uGamma: { value: this.props.gamma },
+                            uDensity: { value: this.props.density },
+                            uVariant: { value: 0 },
+                            uDirection: { value: (this.props.direction * Math.PI) / 180 }
+                        }
+                    });
+                    scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material));
+                    const animate = () => {
+                        requestAnimationFrame(animate);
+                        material.uniforms.uTime.value = performance.now() * 0.001;
+                        renderer.render(scene, camera);
+                    };
+                    animate();
+                    window.addEventListener('resize', () => {
+                        const w = this.container.offsetWidth || window.innerWidth;
+                        const h = this.container.offsetHeight || window.innerHeight;
+                        renderer.setSize(w, h);
+                        material.uniforms.uResolution.value.set(w, h);
+                    });
+                }
+            };
+        })();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Initialize PixelSnow
+            new PixelSnow(document.getElementById('pixel-snow'));
+
+            // Header Effect
+            window.addEventListener('scroll', () => {
+                document.getElementById('header').classList.toggle('scrolled', window.scrollY > 50);
+            });
+
+            // --- Sidekick Logic ---
+            const commandContainer = document.getElementById('command-container');
+            const sidekickCanvas = document.getElementById('sidekick-canvas');
+            const skCtx = sidekickCanvas.getContext('2d');
+            const labels = ['/movies', '/memes', '/cars', '/random', '/group-mode', '/live-vote', '/swipe-feed', '/trending', '/fast-decisions', '/friends-online', '/top-choice', '/quick-pick', '/watch-now', '/viral'];
+            const nodes = [];
+            let skW, skH;
+
+            function resk() {
+                skW = window.innerWidth; skH = window.innerHeight;
+                sidekickCanvas.width = skW * devicePixelRatio; sidekickCanvas.height = skH * devicePixelRatio;
+                skCtx.scale(devicePixelRatio, devicePixelRatio);
+            }
+            resk(); window.addEventListener('resize', resk);
+
+            labels.forEach(l => {
+                const el = document.createElement('div');
+                el.className = 'floating-command';
+                el.innerText = l;
+                el.style.opacity = 0;
+                commandContainer.appendChild(el);
+                let x, y;
+                do { x = Math.random() * (skW - 200) + 100; y = Math.random() * (skH - 100) + 50; } 
+                while (Math.abs(x - skW/2) < 200 && Math.abs(y - skH/2) < 150);
+                const node = { el, x, y, baseX: x, baseY: y, phase: Math.random() * PI * 2, opacity: 0.3 + Math.random() * 0.5 };
+                nodes.push(node);
+                gsap.set(el, { x, y });
+            });
+
+            gsap.timeline({ scrollTrigger: { trigger: '#sidekick', start: 'top 60%' } })
+                .to('#sidekick-center', { opacity: 1, scale: 1, duration: 1.5 })
+                .to(nodes.map(n => n.el), { opacity: i => nodes[i].opacity, stagger: 0.05, duration: 1 }, "-=1");
+
+            function animSk() {
+                skCtx.clearRect(0, 0, skW, skH);
+                nodes.forEach((n, i) => {
+                    n.phase += 0.005;
+                    n.currentX = n.baseX + Math.sin(n.phase) * 15;
+                    n.currentY = n.baseY + Math.cos(n.phase * 0.8) * 15;
+                    gsap.set(n.el, { x: n.currentX, y: n.currentY });
+                    skCtx.beginPath(); skCtx.strokeStyle = 'rgba(26,26,26,0.06)'; skCtx.lineWidth = 0.5;
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const o = nodes[j];
+                        const d = Math.hypot(n.currentX - o.currentX, n.currentY - o.currentY);
+                        if (d < 300) { skCtx.moveTo(n.currentX+40, n.currentY+15); skCtx.lineTo(o.currentX+40, o.currentY+15); }
+                    }
+                    skCtx.stroke();
+                });
+                requestAnimationFrame(animSk);
+            }
+            animSk();
+
+            // Parallax
+            window.addEventListener('mousemove', e => {
+                const mx = (e.clientX - skW/2)/(skW/2); const my = (e.clientY - skH/2)/(skH/2);
+                nodes.forEach(n => gsap.to(n.el, { x: n.currentX + mx * 30, y: n.currentY + my * 30, duration: 0.8 }));
+                gsap.to('#sidekick-center', { x: mx * 10, y: my * 10, duration: 1 });
+            });
+
+            // --- Problem Scatter ---
+            const scatter = document.getElementById('scatter-container');
+            for (let i = 0; i < 7; i++) {
+                const c = document.createElement('div');
+                c.className = 'scatter-card';
+                c.style.backgroundImage = `url('assets/card-preview.jpg')`;
+                c.style.left = `calc(50% - 90px + ${Math.random() * 400 - 200}px)`;
+                c.style.top = `calc(50% - 130px + ${Math.random() * 200 - 100}px)`;
+                c.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
+                c.style.opacity = 0;
+                scatter.appendChild(c);
+                gsap.to(c, { opacity: 0.7, scrollTrigger: { trigger: '#problem', start: 'top 60%' }, delay: i * 0.1 });
+            }
+
+            // --- Solution Deck ---
+            gsap.timeline({ scrollTrigger: { trigger: '#solution', start: 'top 50%', end: 'bottom 50%', scrub: 1 } })
+                .from('.deck-card', { x: i => (i === 0 ? -100 : i === 1 ? 100 : 0), rotation: i => (i === 0 ? -15 : i === 1 ? 15 : 0), opacity: 0, stagger: 0.1 })
+                .to('#consensus-label', { opacity: 1, y: -10, duration: 0.5 });
+        });
+    </script>
+</body>
+</html>

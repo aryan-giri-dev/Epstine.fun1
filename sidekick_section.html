@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopify Sidekick Style Floating Commands</title>
+    
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    
+    <!-- GSAP for smooth reveals and hover scaling -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #080808;
+            --text-primary: #F0EFF5;
+            --text-muted: #5C5C6E;
+            --accent: #7C5CBF;
+            --line-color: rgba(255, 255, 255, 0.15);
+            --transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        body.light-mode {
+            --bg-color: #F8F7FF;
+            --text-primary: #1A1A1F;
+            --text-muted: #6B6B7D;
+            --line-color: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            height: 100%;
+            overflow: hidden;
+            background-color: transparent;
+            color: var(--text-primary);
+        }
+
+        /* PixelSnow Background Integration */
+        .pixel-snow-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Container for the standalone section */
+        .sidekick-section {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            background: transparent;
+        }
+
+        #sidekick-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .command-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .floating-command {
+            position: absolute;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            color: var(--text-primary);
+            padding: 14px 24px;
+            cursor: pointer;
+            pointer-events: auto;
+            white-space: nowrap;
+            transition: all 0.4s ease;
+            user-select: none;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-transform: uppercase;
+        }
+
+        .light-mode .floating-command {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        @media (max-width: 768px) {
+            .floating-command { font-size: 11px; padding: 10px 18px; }
+            .sidekick-hero h1 { font-size: 42px; }
+            .user-profile-widget { top: 20px; right: 20px; padding: 6px 12px 6px 6px; }
+            .user-profile-avatar { width: 30px; height: 30px; }
+        }
+
+        .floating-command:hover {
+            color: #fff;
+            background: rgba(124, 92, 191, 0.2);
+            border-color: rgba(124, 92, 191, 0.4);
+            box-shadow: 0 10px 40px rgba(124, 92, 191, 0.2);
+            transform: scale(1.1) translateY(-5px) !important;
+        }
+
+        .command-info {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-muted);
+            max-width: 160px;
+            text-align: center;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .floating-command:hover .command-info {
+            opacity: 1;
+            height: auto;
+            margin-top: 8px;
+        }
+
+        .floating-command.selected {
+            z-index: 100 !important;
+            color: #fff !important;
+            background: rgba(124, 92, 191, 0.9) !important;
+            box-shadow: 0 0 100px rgba(124, 92, 191, 0.5) !important;
+            border: none;
+            opacity: 1 !important;
+        }
+
+        .floating-command.selected .command-info {
+            opacity: 1;
+            height: auto;
+            margin-top: 10px;
+            font-size: 13px;
+            max-width: 260px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .create-room-btn {
+            margin-top: 20px;
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+            text-decoration: none;
+        }
+
+        .floating-command.selected .create-room-btn {
+            display: block;
+        }
+
+        .create-room-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Hero Section */
+        .sidekick-hero {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .sidekick-hero h1 {
+            font-size: 84px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(to bottom, #fff, #444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.04em;
+        }
+
+        .sidekick-hero p {
+            font-size: 18px;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .light-mode .sidekick-hero h1 {
+            background: linear-gradient(to bottom, #1A1A1F, #6B6B7D);
+            -webkit-background-clip: text;
+        }
+
+        /* User Profile Widget */
+        .user-profile-widget {
+            position: fixed;
+            top: 30px;
+            right: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px 8px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .user-profile-widget:hover { transform: scale(1.05); background: rgba(255, 255, 255, 0.1); }
+
+        .light-mode .user-profile-widget {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .user-profile-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-profile-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-profile-name {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .user-profile-status {
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+        }
+
+        .modal {
+            background: #121212;
+            padding: 40px;
+            border-radius: 32px;
+            width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+        }
+
+        .modal h3 { margin-bottom: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+
+        .modal input {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            font-family: inherit;
+            margin-bottom: 24px;
+            outline: none;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .emoji-option {
+            font-size: 24px;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .emoji-option:hover { background: rgba(255,255,255,0.1); }
+        .emoji-option.selected { border-color: var(--accent); background: rgba(124, 92, 191, 0.1); }
+
+        .modal button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        .modal button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(124, 92, 191, 0.3); }
+    </style>
+</head>
+<body>
+
+    <div class="user-profile-widget" id="profile-widget">
+        <div id="user-avatar" class="user-profile-avatar">🧔</div>
+        <div class="user-profile-info">
+            <div id="user-name" class="user-profile-name">Guest</div>
+            <div class="user-profile-status">Online</div>
+        </div>
+    </div>
+
+    <div id="pixel-snow" class="pixel-snow-container"></div>
+
+    <section class="sidekick-section">
+        <div class="sidekick-hero" id="centerText">
+            <h1>Epstine.Fun</h1>
+            <p>Shared Decisions</p>
+        </div>
+        <canvas id="sidekick-canvas"></canvas>
+        <div class="command-container" id="command-container"></div>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <script>
+        // --- PixelSnow Component ---
+        const PixelSnow = (function() {
+            const vertexShader = `void main() { gl_Position = vec4(position, 1.0); }`;
+            const fragmentShader = `
+                precision mediump float;
+                uniform float uTime;
+                uniform vec2 uResolution;
+                uniform float uFlakeSize;
+                uniform float uMinFlakeSize;
+                uniform float uPixelResolution;
+                uniform float uSpeed;
+                uniform float uDepthFade;
+                uniform float uFarPlane;
+                uniform vec3 uColor;
+                uniform float uBrightness;
+                uniform float uGamma;
+                uniform float uDensity;
+                #define PI 3.14159265
+                #define M1 1597334677U
+                #define M2 3812015801U
+                #define M3 3299493293U
+                #define F0 2.3283064e-10
+                #define hash(n) (n * (n ^ (n >> 15)))
+                #define coord3(p) (uvec3(p).x * M1 ^ uvec3(p).y * M2 ^ uvec3(p).z * M3)
+                const vec3 camK = vec3(0.577, 0.577, 0.577);
+                const vec3 camI = vec3(0.707, 0.0, -0.707);
+                const vec3 camJ = vec3(-0.408, 0.816, -0.408);
+                vec3 hash3(uint n) { return vec3(hash(n) * uvec3(1U, 511U, 262143U)) * F0; }
+                void main() {
+                    float res = uPixelResolution;
+                    vec2 fragCoord = floor(gl_FragCoord.xy * (res / uResolution.x));
+                    vec2 resVec = vec2(res, res * (uResolution.y / uResolution.x));
+                    vec3 ray = normalize(vec3((fragCoord - resVec * 0.5) / resVec.x, 1.0));
+                    ray = ray.x * camI + ray.y * camJ + ray.z * camK;
+                    float time = uTime * uSpeed;
+                    vec3 pos = (0.2 * camI + 0.1 * camK) * time;
+                    vec3 strides = 1.0 / max(abs(ray), 0.001);
+                    vec3 phase = fract(pos) * strides;
+                    float t = 0.0;
+                    for (int i = 0; i < 40; i++) {
+                        if (t >= uFarPlane) break;
+                        vec3 fpos = floor(pos);
+                        if (hash3(coord3(fpos)).x < uDensity) {
+                            vec3 h = hash3(coord3(fpos));
+                            vec3 f = 0.5 - 0.5 * cos(4.0 * sin(fpos.yzx*0.07) + 2.0 * h + time * 0.1 * vec3(7,8,5));
+                            f = f * 0.8 + 0.1 + fpos;
+                            float d = dot(f - pos, camK) / dot(ray, camK);
+                            if (d > 0.0) {
+                                vec3 tp = pos + ray * d - f;
+                                if (length(vec2(dot(tp, camI), dot(tp, camJ))) < max(uFlakeSize, uMinFlakeSize * d * 0.001)) {
+                                    float intensity = exp2(-d / uDepthFade) * uBrightness;
+                                    gl_FragColor = vec4(uColor * pow(vec3(intensity), vec3(uGamma)), 1.0);
+                                    return;
+                                }
+                            }
+                        }
+                        float ns = min(min(phase.x, phase.y), phase.z);
+                        t += ns; pos += ray * ns; phase -= ns;
+                    }
+                    gl_FragColor = vec4(0.0);
+                }
+            `;
+            return class {
+                constructor(el) {
+                    this.renderer = new THREE.WebGLRenderer({ alpha: true });
+                    el.appendChild(this.renderer.domElement);
+                    this.scene = new THREE.Scene();
+                    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+                    this.mat = new THREE.ShaderMaterial({
+                        vertexShader, fragmentShader, transparent: true,
+                        uniforms: {
+                            uTime: { value: 0 }, uResolution: { value: new THREE.Vector2() },
+                            uFlakeSize: { value: 0.007 }, uMinFlakeSize: { value: 1.25 },
+                            uPixelResolution: { value: 300 }, uSpeed: { value: 0.5 },
+                            uDepthFade: { value: 6 }, uFarPlane: { value: 12 },
+                            uColor: { value: new THREE.Vector3(1, 1, 1) },
+                            uBrightness: { value: 1.5 }, uGamma: { value: 0.45 }, uDensity: { value: 0.2 }
+                        }
+                    });
+
+                    // Sync theme
+                    if (document.body.classList.contains('light-mode')) {
+                        this.mat.uniforms.uColor.value.set(0.6, 0.5, 0.9);
+                        this.mat.uniforms.uBrightness.value = 0.8;
+                    }
+
+                    this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mat));
+                    this.resize(); window.addEventListener('resize', () => this.resize());
+                    const anim = (t) => { this.mat.uniforms.uTime.value = t * 0.001; this.renderer.render(this.scene, this.camera); requestAnimationFrame(anim); };
+                    requestAnimationFrame(anim);
+                }
+                resize() {
+                    const w = window.innerWidth, h = window.innerHeight;
+                    this.renderer.setSize(w, h);
+                    this.mat.uniforms.uResolution.value.set(w, h);
+                }
+            };
+        })();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('quorum_theme') || 'dark';
+            if (savedTheme === 'light') document.body.classList.add('light-mode');
+
+            new PixelSnow(document.getElementById('pixel-snow'));
+
+            // Load User Identity
+            const humanEmojis = ['🧔', '👩', '🧒', '👱', '👨‍🦰', '👩‍🦱', '👨‍🦳', '👩‍🦳', '👱‍♀️', '👱‍♂️', '🧔‍♂️', '🧔‍♀️', '👩‍🦰', '👩‍🦲', '👨‍🦲', '🤵', '👰', '🤴', '👸', '👳'];
+            
+            const savedName = localStorage.getItem('quorum_user_name') || 'Guest';
+            const savedAvatar = localStorage.getItem('quorum_user_avatar') || humanEmojis[0];
+            
+            document.getElementById('user-name').innerText = savedName;
+            document.getElementById('user-avatar').innerText = savedAvatar;
+
+            const container = document.getElementById('command-container');
+            const canvas = document.getElementById('sidekick-canvas');
+            const ctx = canvas.getContext('2d');
+
+            const labels = [
+                { label: '/movies', info: 'Binge-watch the latest blockbusters with your crew in real-time sync.' },
+                { label: '/memes', info: 'React to the internets finest humor together. High-speed scrolling, maximum laughs.' },
+                { label: '/cars', info: 'Browse exotic collections and vote on your groups dream ride.' },
+                { label: '/random', info: 'Feeling lucky? Let Epstine.Fun surprise you with a shared discovery.' },
+                { label: '/group-mode', info: 'Sync everyone’s feed and start deciding with collective intelligence.' },
+                { label: '/live-vote', info: 'Real-time voting bars that shift as your friends make their choice.' },
+                { label: '/swipe-feed', info: 'The core Epstine.Fun experience. Fast, social, and perfectly synced.' },
+                { label: '/trending', info: 'Discover what other groups are deciding on right now.' },
+                { label: '/friends-online', info: 'See which friends are ready to decide and invite them to a session.' },
+                { label: '/top-choice', info: 'Review the winners from your previous group sessions.' },
+                { label: '/quick-pick', info: 'Need an answer in seconds? Use our lightning-fast decision tool.' },
+                { label: '/watch-now', info: 'Direct integration with streaming services for instant playback.' },
+                { label: '/viral', info: 'The top trending content from across the Epstine.Fun network.' }
+            ];
+
+            const nodes = [];
+            let width, height;
+            let selectedNode = null;
+
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width * window.devicePixelRatio;
+                canvas.height = height * window.devicePixelRatio;
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            labels.forEach((item) => {
+                const el = document.createElement('div');
+                el.className = 'floating-command';
+                el.innerHTML = `
+                    <span>${item.label}</span>
+                    <div class="command-info">
+                        ${item.info}
+                        <a href="lobby.html?room=${encodeURIComponent(item.label)}" class="create-room-btn">Create Room</a>
+                    </div>
+                `;
+                el.style.opacity = 0;
+                container.appendChild(el);
+
+                const spreadFactor = width < 768 ? 0.8 : 0.6;
+                let x = width/2 + (Math.random() - 0.5) * (width * spreadFactor);
+                let y = height/2 + (Math.random() - 0.5) * (height * spreadFactor);
+
+                const node = {
+                    el,
+                    x, y,
+                    baseX: x, baseY: y,
+                    phase: Math.random() * Math.PI * 2,
+                    speed: 0.003 + Math.random() * 0.002,
+                    opacity: 0.7 + Math.random() * 0.3,
+                    currentX: x,
+                    currentY: y,
+                    isHovered: false,
+                    isSelected: false
+                };
+
+                nodes.push(node);
+
+                el.addEventListener('mouseenter', () => {
+                    node.isHovered = true;
+                    if (!node.isSelected) {
+                        gsap.to(el, { scale: 1.1, duration: 0.3 });
+                    }
+                });
+                el.addEventListener('mouseleave', () => {
+                    node.isHovered = false;
+                    if (!node.isSelected) {
+                        gsap.to(el, { scale: 1, duration: 0.3 });
+                    }
+                });
+
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (node.isSelected) {
+                        deselectNode(node);
+                    } else {
+                        if (selectedNode) deselectNode(selectedNode);
+                        selectNode(node);
+                    }
+                });
+            });
+
+            function selectNode(node) {
+                selectedNode = node;
+                node.isSelected = true;
+                node.el.classList.add('selected');
+                
+                const targetX = width / 2 - node.el.offsetWidth / 2;
+                const targetY = height / 2 - node.el.offsetHeight / 2;
+
+                gsap.to(node, { baseX: targetX, baseY: targetY, duration: 0.8, ease: 'power3.inOut' });
+                nodes.forEach(n => {
+                    if (n !== node) gsap.to(n.el, { opacity: 0.1, duration: 0.5 });
+                });
+            }
+
+            function deselectNode(node) {
+                node.isSelected = false;
+                node.el.classList.remove('selected');
+                gsap.to(node, { baseX: node.x, baseY: node.y, duration: 0.8, ease: 'power3.inOut' });
+                nodes.forEach(n => {
+                    gsap.to(n.el, { opacity: n.opacity, duration: 0.5 });
+                });
+                selectedNode = null;
+            }
+
+            window.addEventListener('click', () => { if (selectedNode) deselectNode(selectedNode); });
+
+            gsap.to(nodes.map(n => n.el), { opacity: (i) => nodes[i].opacity, duration: 1.2, stagger: 0.08 });
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                
+                const hoveredNode = nodes.find(n => n.isHovered && !n.isSelected);
+
+                nodes.forEach((node, i) => {
+                    if (!node.isSelected) {
+                        node.phase += node.speed;
+                        const driftX = Math.sin(node.phase) * 20;
+                        const driftY = Math.cos(node.phase * 0.8) * 20;
+                        
+                        let targetX = node.baseX + driftX;
+                        let targetY = node.baseY + driftY;
+
+                        if (hoveredNode && hoveredNode !== node) {
+                            const dx = node.currentX - hoveredNode.currentX;
+                            const dy = node.currentY - hoveredNode.currentY;
+                            const dist = Math.hypot(dx, dy);
+                            const threshold = 350;
+
+                            if (dist < threshold) {
+                                const force = (threshold - dist) / threshold;
+                                targetX += (dx / dist) * force * 150;
+                                targetY += (dy / dist) * force * 150;
+                            }
+                        }
+
+                        node.currentX += (targetX - node.currentX) * 0.1;
+                        node.currentY += (targetY - node.currentY) * 0.1;
+                    } else {
+                        node.currentX += (node.baseX - node.currentX) * 0.1;
+                        node.currentY += (node.baseY - node.currentY) * 0.1;
+                    }
+
+                    node.el.style.left = `${node.currentX}px`;
+                    node.el.style.top = `${node.currentY}px`;
+
+                    // Draw Network Lines
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const other = nodes[j];
+                        const dx = node.currentX - other.currentX;
+                        const dy = node.currentY - other.currentY;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 300) {
+                            ctx.beginPath();
+                            ctx.moveTo(node.currentX + node.el.offsetWidth/2, node.currentY + node.el.offsetHeight/2);
+                            ctx.lineTo(other.currentX + other.el.offsetWidth/2, other.currentY + other.el.offsetHeight/2);
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 * (1 - dist/300)})`;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    }
+                });
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+
+            // Subtle Parallax on Mouse Move
+            window.addEventListener('mousemove', (e) => {
+                const mouseX = (e.clientX - width / 2) / (width / 2);
+                const mouseY = (e.clientY - height / 2) / (height / 2);
+
+                nodes.forEach(node => {
+                    gsap.to(node, {
+                        baseX: node.x + mouseX * 25,
+                        baseY: node.y + mouseY * 25,
+                        duration: 1,
+                        ease: 'power2.out'
+                    });
+                });
+
+                gsap.to(centerText, {
+                    x: mouseX * 10,
+                    y: mouseY * 10,
+                    duration: 1.2,
+                    ease: 'power2.out'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

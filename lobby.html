@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epstine.Fun | Lobby</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #080808;
+            --accent: #7C5CBF;
+            --text-primary: #F0EFF5;
+            --text-muted: #5C5C6E;
+            --card-bg: rgba(18, 18, 18, 0.6);
+            --transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        body.light-mode {
+            --bg: #F8F7FF;
+            --text-primary: #1A1A1F;
+            --text-muted: #6B6B7D;
+            --card-bg: rgba(255, 255, 255, 0.8);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { background-color: var(--bg); }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: transparent;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 40px 0;
+        }
+
+        .pixel-snow-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+        .lobby-card {
+            position: relative;
+            z-index: 10;
+            background: var(--card-bg);
+            backdrop-filter: blur(40px);
+            padding: 50px;
+            border-radius: 40px;
+            width: 700px;
+            max-width: 95%;
+            text-align: center;
+            border: 1px solid rgba(124, 92, 191, 0.1);
+            box-shadow: 0 50px 100px rgba(0,0,0,0.2);
+            transition: var(--transition);
+        }
+
+        @media (max-width: 768px) {
+            .lobby-card { padding: 40px 24px; border-radius: 32px; }
+            .lobby-layout { flex-direction: column; gap: 30px; }
+            .right-col { width: 100%; }
+            h1 { font-size: 26px; }
+            .items-box { height: 200px; }
+        }
+
+        h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+        .room-tag { display: inline-block; background: var(--accent); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; margin-bottom: 30px; text-transform: uppercase; }
+
+        .lobby-layout { display: flex; gap: 40px; text-align: left; }
+        .left-col { flex: 1; }
+        .right-col { width: 280px; }
+
+        h3 { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+        .players-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 30px; }
+        .player-slot { display: flex; align-items: center; gap: 12px; opacity: 0.3; transition: var(--transition); background: rgba(255,255,255,0.03); padding: 10px; border-radius: 16px; }
+        .player-slot.filled { opacity: 1; background: rgba(124, 92, 191, 0.1); border: 1px solid rgba(124, 92, 191, 0.2); }
+        .avatar-circle { width: 44px; height: 44px; border-radius: 50%; border: 1px dashed rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 22px; background: rgba(255,255,255,0.05); }
+        .filled .avatar-circle { border-style: solid; border-color: var(--accent); background: rgba(124, 92, 191, 0.1); }
+        .player-name { font-size: 11px; font-weight: 700; }
+
+        /* Items List */
+        .items-box { background: rgba(0,0,0,0.05); border: 1px solid rgba(124, 92, 191, 0.1); border-radius: 20px; padding: 20px; height: 300px; overflow-y: auto; margin-bottom: 16px; }
+        .item-row { display: flex; align-items: center; justify-content: space-between; background: rgba(124, 92, 191, 0.05); padding: 10px 16px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .empty-msg { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 100px; }
+
+        .input-group { display: flex; gap: 8px; }
+        .input-group input { flex: 1; background: rgba(0,0,0,0.05); border: 1px solid rgba(124, 92, 191, 0.1); padding: 12px; border-radius: 12px; color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none; }
+        .input-group button { background: var(--accent); border: none; width: 44px; border-radius: 12px; color: #fff; font-weight: 800; cursor: pointer; }
+
+        .controls { display: flex; flex-direction: column; gap: 12px; margin-top: 30px; }
+        .add-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #fff; padding: 16px; border-radius: 16px; font-weight: 700; cursor: pointer; transition: var(--transition); width: 100%; }
+        .add-btn:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
+        .start-btn { background: var(--accent); color: #fff; border: none; padding: 18px; border-radius: 16px; font-weight: 800; cursor: pointer; transition: var(--transition); font-size: 16px; opacity: 0.5; pointer-events: none; width: 100%; }
+        .start-btn.ready { opacity: 1; pointer-events: auto; box-shadow: 0 20px 40px rgba(124, 92, 191, 0.3); }
+
+        /* Upload Zone */
+        .upload-zone {
+            background: rgba(124, 92, 191, 0.05);
+            border: 2px dashed rgba(124, 92, 191, 0.2);
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            background: rgba(124, 92, 191, 0.1);
+            border-color: var(--accent);
+        }
+        .upload-icon { font-size: 24px; margin-bottom: 8px; }
+        .upload-text { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+        .upload-subtext { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        .item-row { display: flex; align-items: center; gap: 12px; background: rgba(124, 92, 191, 0.05); padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .item-thumb { width: 40px; height: 40px; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.1); }
+
+        .back-btn { position: absolute; top: 30px; left: 30px; color: var(--text-primary); text-decoration: none; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px; opacity: 0.6; transition: var(--transition); z-index: 20; }
+        .back-btn:hover { opacity: 1; transform: translateX(-5px); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; }
+        .modal h3 { margin-bottom: 20px; font-size: 18px; font-weight: 800; }
+        .modal input { width: 100%; padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-family: inherit; margin-bottom: 20px; outline: none; text-align: center; }
+        .emoji-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        .emoji-opt { font-size: 24px; padding: 8px; cursor: pointer; border-radius: 12px; border: 2px solid transparent; transition: 0.2s; }
+        .emoji-opt:hover { background: rgba(255,255,255,0.1); }
+        .emoji-opt.selected { border-color: var(--accent); background: rgba(124, 92, 191, 0.1); }
+        .modal button { background: var(--accent); color: #fff; border: none; padding: 14px 28px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="pixel-snow" class="pixel-snow-container"></div>
+    <a href="sidekick_section.html" class="back-btn">← Back</a>
+
+    <div class="lobby-card">
+        <h1>Room Lobby</h1>
+        <div class="room-tag" id="room-tag">General</div>
+
+        <div class="lobby-layout">
+            <div class="left-col">
+                <h3>VOTING DECK <span id="item-count" style="color: var(--accent)">0</span>                </h3>
+                <div class="items-box" id="items-box">
+                    <div class="empty-msg">No items added. Suggest a movie or topic below.</div>
+                </div>
+                <div class="input-group" style="margin-top: 20px;">
+                    <input type="text" id="item-input" placeholder="Suggest a movie, car, or meme...">
+                    <button id="add-item-btn">+</button>
+                </div>
+                <div class="upload-zone" id="upload-zone">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">Or Upload Custom Photos</div>
+                    <div class="upload-subtext">Drag & drop or click to select</div>
+                    <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
+                </div>
+            </div>
+
+            <div class="right-col">
+                <h3>PLAYERS</h3>
+                <div class="players-grid" id="players-grid">
+                    <div class="player-slot filled">
+                        <div id="host-avatar" class="avatar-circle"></div>
+                        <div id="host-name" class="player-name">Host</div>
+                    </div>
+                    <div class="player-slot" id="slot-2"><div class="avatar-circle">+</div><div class="player-name">Waiting...</div></div>
+                    <div class="player-slot" id="slot-3"><div class="avatar-circle">+</div><div class="player-name">Waiting...</div></div>
+                    <div class="player-slot" id="slot-4"><div class="avatar-circle">+</div><div class="player-name">Waiting...</div></div>
+                    <div class="player-slot" id="slot-5"><div class="avatar-circle">+</div><div class="player-name">Waiting...</div></div>
+                    <div class="player-slot" id="slot-6"><div class="avatar-circle">+</div><div class="player-name">Waiting...</div></div>
+                </div>
+                
+                <div class="controls">
+                    <button class="add-btn" id="add-player">Add Friend</button>
+                    <button class="start-btn" id="start-btn">Start Live Session</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <h3>Add a Friend</h3>
+            <input type="text" id="friend-name-input" placeholder="Friend's Name..." maxlength="12">
+            <div class="emoji-grid" id="friend-emoji-grid"></div>
+            <button id="confirm-friend">Bring to Lobby</button>
+        </div>
+    </div>
+
+    <script>
+        // --- PixelSnow logic here (same as others) ---
+        // (Implementation hidden for brevity but will be in final file)
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('quorum_theme') || 'dark';
+            if (savedTheme === 'light') document.body.classList.add('light-mode');
+
+            // Initialize PixelSnow with optimized params
+            // --- PixelSnow Component (Robust) ---
+            const PixelSnow = (function() {
+                const vertexShader = `
+                    void main() {
+                        gl_Position = vec4(position, 1.0);
+                    }
+                `;
+
+                const fragmentShader = `
+                    precision mediump float;
+
+                    uniform float uTime;
+                    uniform vec2 uResolution;
+                    uniform float uFlakeSize;
+                    uniform float uMinFlakeSize;
+                    uniform float uPixelResolution;
+                    uniform float uSpeed;
+                    uniform float uDepthFade;
+                    uniform float uFarPlane;
+                    uniform vec3 uColor;
+                    uniform float uBrightness;
+                    uniform float uGamma;
+                    uniform float uDensity;
+                    uniform float uVariant;
+                    uniform float uDirection;
+
+                    #define PI 3.14159265
+                    #define PI_OVER_6 0.5235988
+                    #define PI_OVER_3 1.0471976
+                    #define INV_SQRT3 0.57735027
+                    #define M1 1597334677U
+                    #define M2 3812015801U
+                    #define M3 3299493293U
+                    #define F0 2.3283064e-10
+
+                    #define hash(n) (n * (n ^ (n >> 15)))
+                    #define coord3(p) (uvec3(p).x * M1 ^ uvec3(p).y * M2 ^ uvec3(p).z * M3)
+
+                    const vec3 camK = vec3(0.57735027, 0.57735027, 0.57735027);
+                    const vec3 camI = vec3(0.70710678, 0.0, -0.70710678);
+                    const vec3 camJ = vec3(-0.40824829, 0.81649658, -0.40824829);
+                    const vec2 b1d = vec2(0.574, 0.819);
+
+                    vec3 hash3(uint n) {
+                        uvec3 hashed = hash(n) * uvec3(1U, 511U, 262143U);
+                        return vec3(hashed) * F0;
+                    }
+
+                    float snowflakeDist(vec2 p) {
+                        float r = length(p);
+                        float a = atan(p.y, p.x);
+                        a = abs(mod(a + PI_OVER_6, PI_OVER_3) - PI_OVER_6);
+                        vec2 q = r * vec2(cos(a), sin(a));
+                        float dMain = max(abs(q.y), max(-q.x, q.x - 1.0));
+                        float b1t = clamp(dot(q - vec2(0.4, 0.0), b1d), 0.0, 0.4);
+                        float dB1 = length(q - vec2(0.4, 0.0) - b1t * b1d);
+                        float b2t = clamp(dot(q - vec2(0.7, 0.0), b1d), 0.0, 0.25);
+                        float dB2 = length(q - vec2(0.7, 0.0) - b2t * b1d);
+                        return min(dMain, min(dB1, dB2)) * 10.0;
+                    }
+
+                    void main() {
+                        float invPixelRes = 1.0 / uPixelResolution;
+                        float pixelSize = max(1.0, floor(0.5 + uResolution.x * invPixelRes));
+                        float invPixelSize = 1.0 / pixelSize;
+                        
+                        vec2 fragCoord = floor(gl_FragCoord.xy * invPixelSize);
+                        vec2 res = uResolution * invPixelSize;
+                        float invResX = 1.0 / res.x;
+
+                        vec3 ray = normalize(vec3((fragCoord - res * 0.5) * invResX, 1.0));
+                        ray = ray.x * camI + ray.y * camJ + ray.z * camK;
+
+                        float timeSpeed = uTime * uSpeed;
+                        float windX = cos(uDirection) * 0.4;
+                        float windY = sin(uDirection) * 0.4;
+                        vec3 camPos = (windX * camI + windY * camJ + 0.1 * camK) * timeSpeed;
+                        vec3 pos = camPos;
+
+                        vec3 absRay = max(abs(ray), vec3(0.001));
+                        vec3 strides = 1.0 / absRay;
+                        vec3 raySign = step(ray, vec3(0.0));
+                        vec3 phase = fract(pos) * strides;
+                        phase = mix(strides - phase, phase, raySign);
+
+                        float rayDotCamK = dot(ray, camK);
+                        float invRayDotCamK = 1.0 / rayDotCamK;
+                        float invDepthFade = 1.0 / uDepthFade;
+                        float halfInvResX = 0.5 * invResX;
+                        vec3 timeAnim = timeSpeed * 0.1 * vec3(7.0, 8.0, 5.0);
+
+                        float t = 0.0;
+                        for (int i = 0; i < 64; i++) {
+                            if (t >= uFarPlane) break;
+                            
+                            vec3 fpos = floor(pos);
+                            uint cellCoord = coord3(fpos);
+                            float cellHash = hash3(cellCoord).x;
+
+                            if (cellHash < uDensity) {
+                                vec3 h = hash3(cellCoord);
+                                vec3 sinArg1 = fpos.yzx * 0.073;
+                                vec3 sinArg2 = fpos.zxy * 0.27;
+                                vec3 flakePos = 0.5 - 0.5 * cos(4.0 * sin(sinArg1) + 4.0 * sin(sinArg2) + 2.0 * h + timeAnim);
+                                flakePos = flakePos * 0.8 + 0.1 + fpos;
+
+                                float toIntersection = dot(flakePos - pos, camK) * invRayDotCamK;
+                                
+                                if (toIntersection > 0.0) {
+                                    vec3 testPos = pos + ray * toIntersection - flakePos;
+                                    float testX = dot(testPos, camI);
+                                    float testY = dot(testPos, camJ);
+                                    vec2 testUV = abs(vec2(testX, testY));
+                                    
+                                    float depth = dot(flakePos - camPos, camK);
+                                    float flakeSize = max(uFlakeSize, uMinFlakeSize * depth * halfInvResX);
+                                    
+                                    float dist;
+                                    if (uVariant < 0.5) {
+                                        dist = max(testUV.x, testUV.y);
+                                    } else if (uVariant < 1.5) {
+                                        dist = length(testUV);
+                                    } else {
+                                        float invFlakeSize = 1.0 / flakeSize;
+                                        dist = snowflakeDist(vec2(testX, testY) * invFlakeSize) * flakeSize;
+                                    }
+
+                                    if (dist < flakeSize) {
+                                        float flakeSizeRatio = uFlakeSize / flakeSize;
+                                        float intensity = exp2(-(t + toIntersection) * invDepthFade) *
+                                                         min(1.0, flakeSizeRatio * flakeSizeRatio) * uBrightness;
+                                        gl_FragColor = vec4(uColor * pow(vec3(intensity), vec3(uGamma)), 1.0);
+                                        return;
+                                    }
+                                }
+                            }
+
+                            float nextStep = min(min(phase.x, phase.y), phase.z);
+                            vec3 sel = step(phase, vec3(nextStep));
+                            phase = phase - nextStep + strides * sel;
+                            t += nextStep;
+                            pos = mix(pos + ray * nextStep, floor(pos + ray * nextStep + 0.5), sel);
+                        }
+                        gl_FragColor = vec4(0.0);
+                    }
+                `;
+
+                return class {
+                    constructor(container, props = {}) {
+                        this.container = container;
+                        this.props = {
+                            color: '#ffffff',
+                            flakeSize: 0.015,
+                            minFlakeSize: 1.25,
+                            pixelResolution: 480,
+                            speed: 1.25,
+                            depthFade: 9.5,
+                            farPlane: 30,
+                            brightness: 0.5,
+                            gamma: 0.4545,
+                            density: 0.2,
+                            variant: 'snowflake',
+                            direction: 125,
+                            ...props
+                        };
+                        this.init();
+                    }
+
+                    init() {
+                        this.scene = new THREE.Scene();
+                        this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+                        this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
+                        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                        this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
+                        this.renderer.setClearColor(0x000000, 0);
+                        this.container.appendChild(this.renderer.domElement);
+
+                        const threeColor = new THREE.Color(this.props.color);
+                        const variantValue = this.props.variant === 'round' ? 1.0 : this.props.variant === 'snowflake' ? 2.0 : 0.0;
+
+                        this.material = new THREE.ShaderMaterial({
+                            vertexShader,
+                            fragmentShader,
+                            uniforms: {
+                                uTime: { value: 0 },
+                                uResolution: { value: new THREE.Vector2(this.container.offsetWidth, this.container.offsetHeight) },
+                                uFlakeSize: { value: this.props.flakeSize },
+                                uMinFlakeSize: { value: this.props.minFlakeSize },
+                                uPixelResolution: { value: this.props.pixelResolution },
+                                uSpeed: { value: this.props.speed },
+                                uDepthFade: { value: this.props.depthFade },
+                                uFarPlane: { value: this.props.farPlane },
+                                uColor: { value: new THREE.Vector3(threeColor.r, threeColor.g, threeColor.b) },
+                                uBrightness: { value: this.props.brightness },
+                                uGamma: { value: this.props.gamma },
+                                uDensity: { value: this.props.density },
+                                uVariant: { value: variantValue },
+                                uDirection: { value: (this.props.direction * Math.PI) / 180 }
+                            },
+                            transparent: true
+                        });
+
+                        this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
+                        this.scene.add(this.mesh);
+
+                        this.resize = this.resize.bind(this);
+                        window.addEventListener('resize', this.resize);
+
+                        this.startTime = performance.now();
+                        this.animate = this.animate.bind(this);
+                        requestAnimationFrame(this.animate);
+                    }
+
+                    animate() {
+                        this.material.uniforms.uTime.value = (performance.now() - this.startTime) * 0.001;
+                        this.renderer.render(this.scene, this.camera);
+                        this.requestRef = requestAnimationFrame(this.animate);
+                    }
+
+                    resize() {
+                        const w = this.container.offsetWidth, h = this.container.offsetHeight;
+                        this.renderer.setSize(w, h);
+                        this.material.uniforms.uResolution.value.set(w, h);
+                    }
+                };
+            })();
+
+            new PixelSnow(document.getElementById('pixel-snow'), {
+                color: document.body.classList.contains('light-mode') ? '#a080ff' : '#ffffff',
+                brightness: document.body.classList.contains('light-mode') ? 0.3 : 0.5
+            });
+
+            // Load Identity
+            const hostName = localStorage.getItem('quorum_user_name') || 'Host';
+            const hostAvatar = localStorage.getItem('quorum_user_avatar') || '👤';
+            document.getElementById('host-name').innerText = hostName;
+            document.getElementById('host-avatar').innerText = hostAvatar;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomName = urlParams.get('room') || 'General';
+            document.getElementById('room-tag').innerText = roomName.replace('/', '');
+
+            const players = [hostName];
+            const playerAvatars = [hostAvatar];
+            const items = [];
+
+            const addItemBtn = document.getElementById('add-item-btn');
+            const itemInput = document.getElementById('item-input');
+            const itemsBox = document.getElementById('items-box');
+            const startBtn = document.getElementById('start-btn');
+            const uploadZone = document.getElementById('upload-zone');
+            const fileInput = document.getElementById('file-input');
+
+            addItemBtn.addEventListener('click', () => {
+                const val = itemInput.value.trim();
+                if (!val) return;
+                
+                items.push({ name: val, data: null });
+                itemInput.value = '';
+                updateItemsList();
+                checkReady();
+            });
+
+            uploadZone.addEventListener('click', () => fileInput.click());
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            function handleFiles(files) {
+                Array.from(files).forEach(file => {
+                    if (!file.type.startsWith('image/')) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        items.push({
+                            name: file.name.split('.')[0],
+                            data: e.target.result
+                        });
+                        updateItemsList();
+                        checkReady();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            function updateItemsList() {
+                if (items.length === 0) {
+                    itemsBox.innerHTML = '<div class="empty-msg">No images added. Upload some images above.</div>';
+                } else {
+                    itemsBox.innerHTML = items.map((item, i) => `
+                        <div class="item-row">
+                            <div class="item-thumb" style="background-image: url('${item.data || 'https://picsum.photos/seed/' + encodeURIComponent(item.name) + '/100/100'}')"></div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 12px;">${item.name}</div>
+                                <div style="color: var(--accent); font-size: 9px; text-transform: uppercase;">${item.data ? 'Photo Upload' : 'Suggest Item'}</div>
+                            </div>
+                            <button onclick="removeItem(${i})" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px;">&times;</button>
+                        </div>
+                    `).join('');
+                }
+                document.getElementById('item-count').innerText = items.length;
+            }
+
+            window.removeItem = (index) => {
+                items.splice(index, 1);
+                updateItemsList();
+                checkReady();
+            };
+
+            function checkReady() {
+                if (players.length >= 1 && items.length >= 1) {
+                    startBtn.classList.add('ready');
+                } else {
+                    startBtn.classList.remove('ready');
+                }
+            }
+
+            // Player logic (Modal etc)
+            const addPlayerBtn = document.getElementById('add-player');
+            const modal = document.getElementById('modal-overlay');
+            const confirmBtn = document.getElementById('confirm-friend');
+            const friendInput = document.getElementById('friend-name-input');
+
+            const friendEmojiGrid = document.getElementById('friend-emoji-grid');
+            const humanEmojis = ['🧔', '👩', '🧒', '👱', '👨‍🦰', '👩‍🦱', '👨‍🦳', '👩‍🦳', '👱‍♀️', '👱‍♂️', '🧔‍♂️', '🧔‍♀️', '👩‍🦰', '👩‍🦲', '👨‍🦲', '🤵', '👰', '🤴', '👸', '👳'];
+            let selectedFriendEmoji = humanEmojis[0];
+
+            humanEmojis.forEach(emoji => {
+                const opt = document.createElement('div');
+                opt.className = 'emoji-opt';
+                opt.innerText = emoji;
+                opt.onclick = () => {
+                    document.querySelectorAll('.emoji-opt').forEach(el => el.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    selectedFriendEmoji = emoji;
+                };
+                friendEmojiGrid.appendChild(opt);
+            });
+
+            addPlayerBtn.addEventListener('click', () => {
+                modal.style.display = 'flex';
+                gsap.to(modal, { opacity: 1, duration: 0.3 });
+                friendInput.focus();
+                
+                // Randomly select one initially
+                const randIdx = Math.floor(Math.random() * humanEmojis.length);
+                const opts = document.querySelectorAll('.emoji-opt');
+                opts.forEach(el => el.classList.remove('selected'));
+                opts[randIdx].classList.add('selected');
+                selectedFriendEmoji = humanEmojis[randIdx];
+            });
+
+            confirmBtn.addEventListener('click', () => {
+                const name = friendInput.value.trim() || `Friend ${players.length}`;
+                addPlayer(name, selectedFriendEmoji);
+                friendInput.value = '';
+                gsap.to(modal, { opacity: 0, duration: 0.3, onComplete: () => modal.style.display = 'none' });
+                checkReady();
+            });
+
+            function addPlayer(name, avatar) {
+                if (players.length >= 6) return;
+                const idx = players.length;
+                players.push(name);
+                playerAvatars.push(avatar);
+                
+                const slot = document.getElementById(`slot-${idx + 1}`);
+                slot.classList.add('filled');
+                slot.querySelector('.avatar-circle').innerText = avatar;
+                slot.querySelector('.player-name').innerText = name;
+                gsap.from(slot, { scale: 0.8, opacity: 0, duration: 0.5, ease: 'back.out' });
+            }
+
+            startBtn.addEventListener('click', () => {
+                localStorage.setItem('quorum_session_players', JSON.stringify(players));
+                localStorage.setItem('quorum_session_avatars', JSON.stringify(playerAvatars));
+                localStorage.setItem('quorum_session_deck', JSON.stringify(items));
+                window.location.href = `live_room.html?room=${roomName}&count=${players.length}`;
+            });
+        });
+    </script>
+</body>
+</html>
